@@ -1,0 +1,295 @@
+// Luna İK Platformu — Prisma şeması
+// Not: Dağıtım kararı netleşince provider "postgresql" olarak değiştirilip
+// DATABASE_URL güncellenerek PostgreSQL'e geçilebilir.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Kimlik & Yetki ────────────────────────────────────────────────
+
+enum Role {
+  SISTEM_YONETICISI
+  IK_YONETICISI
+  IK_UZMANI
+  IK_ASISTANI
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  phone         String? // şifreli (AES-256-GCM)
+  passwordHash  String
+  role          Role      @default(IK_UZMANI)
+  isActive      Boolean   @default(true)
+  // 2FA
+  totpSecret    String? // şifreli (AES-256-GCM)
+  totpEnabled   Boolean   @default(false)
+  // güvenlik
+  failedLogins  Int       @default(0)
+  lockedUntil   DateTime?
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions      Session[]
+  auditLogs     AuditLog[]
+  candidates    Candidate[]  @relation("UploadedBy")
+  qrCodes       QrCode[]
+  managedProjects Project[]  @relation("IkSorumlusu")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique // SHA-256(token) — düz token saklanmaz
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip         String?
+  userAgent  String?
+  twoFaOk    Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── Organizasyon ──────────────────────────────────────────────────
+
+model Project {
+  id             String   @id @default(cuid())
+  ulke           String   @default("Türkiye")
+  bolge          String // Marmara, Ege, ...
+  kurum          String // Tepe Tesis Yönetimi, ...
+  segment        String // Temizlik Hizmetleri, Güvenlik Hizmetleri, ...
+  ad             String // İstanbul Havalimanı Temizlik
+  kod            String   @unique // IST-TRM-001
+  il             String
+  ilce           String
+  masrafMerkezi  String?
+  ikSorumlusuId  String?
+  ikSorumlusu    User?    @relation("IkSorumlusu", fields: [ikSorumlusuId], references: [id])
+  yonetici1      String?
+  yonetici2      String?
+  yonetici3      String?
+  aktif          Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  positions   ProjectPosition[]
+  candidates  Candidate[]
+
+  @@index([bolge])
+  @@index([kurum])
+  @@index([segment])
+}
+
+model Position {
+  id        String   @id @default(cuid())
+  ad        String   @unique // Temizlik Personeli, Güvenlik Personeli...
+  aktif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  projectPositions ProjectPosition[]
+  candidates       Candidate[]
+}
+
+// Proje bazlı norm kadro (MY = mavi yaka, BY = beyaz yaka)
+model ProjectPosition {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  positionId   String
+  position     Position @relation(fields: [positionId], references: [id])
+  tip          String   @default("MY") // MY | BY
+  normKadro    Int      @default(0)
+  aktifKadro   Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  @@unique([projectId, positionId, tip])
+  @@index([projectId])
+}
+
+model Source {
+  id        String   @id @default(cuid())
+  ad        String   @unique // kariyer.net, İŞKUR, sahibinden.com...
+  tip       String   @default("dijital") // dijital | fiziksel | kurumsal | diger
+  maliyet   Float    @default(0) // aday başı maliyet (₺)
+  aktif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  candidates Candidate[]
+  qrCodes    QrCode[]
+}
+
+// ─── Adaylar ───────────────────────────────────────────────────────
+
+enum CandidateStatus {
+  OLUMLU
+  OLUMSUZ
+  BEKLEMEDE
+  ULASILAMADI
+}
+
+model Candidate {
+  id           String   @id @default(cuid())
+  // Kişisel veriler — şifreli alanlar (AES-256-GCM) "enc:" öneki ile saklanır
+  adSoyad      String
+  adSoyadIndex String // arama için normalize edilmiş küçük harf (şifresiz)
+  dogumTarihi  String? // şifreli
+  cinsiyet     String? // Erkek | Kadın | Belirtilmemiş
+  telefon      String? // şifreli
+  telefonIndex String? // son 4 hane + HMAC — arama/eşleşme için
+  email        String? // şifreli
+  il           String?
+  ilce         String?
+  adres        String? // şifreli
+
+  // Başvuru bilgileri
+  positionId   String?
+  position     Position? @relation(fields: [positionId], references: [id])
+  projectId    String?
+  project      Project?  @relation(fields: [projectId], references: [id])
+  sourceId     String?
+  source       Source?   @relation(fields: [sourceId], references: [id])
+  basvuruTarihi DateTime @default(now())
+
+  // Ek nitelikler
+  ogrenimDurumu    String? // İlköğretim | Ortaöğretim | Lise | Ön Lisans | Lisans | Yüksek Lisans
+  engellilikDurumu Boolean @default(false)
+  emeklilikDurumu  Boolean @default(false)
+  askerlikDurumu   String? // Yapıldı | Yapılmadı | Muaf
+  deneyim          String?
+  notlar           String? // şifreli
+
+  // Durum
+  durum            CandidateStatus @default(BEKLEMEDE)
+  onMulakatSonucu  String? // Olumlu | Olumsuz | Beklemede | Ulaşılamadı
+  onMulakatTarihi  DateTime?
+  iseBaslama       Boolean  @default(false)
+  iseBaslamaTarihi DateTime?
+  projeYonlendirildi Boolean @default(false)
+
+  // KVKK
+  kvkkOnay       Boolean  @default(false)
+  kvkkOnayTarihi DateTime?
+
+  // Kayıt kaynağı
+  girisYontemi  String   @default("manuel") // manuel | import | api | qr-form
+  importBatchId String?
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id])
+  qrCodeId      String?
+  qrCode        QrCode?  @relation(fields: [qrCodeId], references: [id])
+  uploadedById  String?
+  uploadedBy    User?    @relation("UploadedBy", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  calls CallRecord[]
+
+  @@index([durum])
+  @@index([basvuruTarihi])
+  @@index([adSoyadIndex])
+  @@index([telefonIndex])
+  @@index([positionId])
+  @@index([projectId])
+  @@index([sourceId])
+}
+
+// ─── YZ Call Center ────────────────────────────────────────────────
+
+model CallRecord {
+  id           String    @id @default(cuid())
+  candidateId  String
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  aramaTarihi  DateTime
+  kacinciArama Int       @default(1)
+  gorusmeSuresiSn Int? // saniye
+  sonuc        String // Olumlu | Olumsuz | Beklemede | Ulaşılamadı | Hatalı Numara
+  smsDurumu    String? // Gönderildi | Gönderilemedi
+  smsOkundu    Boolean  @default(false)
+  linkTiklandi Boolean  @default(false)
+  basvuruYapti Boolean  @default(false)
+  notlar       String? // şifreli
+  createdAt    DateTime @default(now())
+
+  @@index([candidateId])
+  @@index([aramaTarihi])
+}
+
+// ─── Karekod ───────────────────────────────────────────────────────
+
+model QrCode {
+  id          String   @id @default(cuid())
+  kod         String   @unique // QR-2024-05-20-1435-001
+  slug        String   @unique // public form URL'i için rastgele token
+  sourceId    String?
+  source      Source?  @relation(fields: [sourceId], references: [id])
+  kurum       String?
+  pozisyonlar String // JSON dizi: pozisyon adları
+  projectId   String?
+  cerceve     String   @default("cerceveli") // cerceveli | cercevesiz | koseli | renkli
+  renk        String   @default("#4F39F6")
+  ekBilgi     String?
+  aktif       Boolean  @default(true)
+  taramaSayisi Int     @default(0)
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  candidates Candidate[]
+}
+
+// ─── Import ────────────────────────────────────────────────────────
+
+model ImportBatch {
+  id          String   @id @default(cuid())
+  dosyaAdi    String
+  tip         String // xlsx | csv | json | api
+  toplamKayit Int      @default(0)
+  basarili    Int      @default(0)
+  hatali      Int      @default(0)
+  hatalar     String? // JSON: satır bazlı hata listesi
+  durum       String   @default("isleniyor") // isleniyor | tamamlandi | hata
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  candidates Candidate[]
+}
+
+// Telesekreter robotu vb. sistemler için API anahtarları
+model ApiKey {
+  id         String    @id @default(cuid())
+  ad         String // "Telesekreter Robotu"
+  keyHash    String    @unique // SHA-256(anahtar)
+  prefix     String // görüntüleme için ilk 8 karakter
+  scopes     String    @default("ingest") // virgülle ayrık
+  aktif      Boolean   @default(true)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+// ─── Denetim kaydı ─────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  eylem     String // giris, giris-basarisiz, aday-goruntule, aday-guncelle, disa-aktar...
+  varlik    String? // Candidate, User, Project...
+  varlikId  String?
+  detay     String? // JSON
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([eylem])
+  @@index([createdAt])
+}
