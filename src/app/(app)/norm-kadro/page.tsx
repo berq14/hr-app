@@ -12,7 +12,7 @@ import { requireUser } from "@/lib/auth";
 import { normKadroOzet } from "@/lib/analytics";
 import { StatCard } from "@/components/stat-card";
 import { Card } from "@/components/ui";
-import { DonutChart, DonutLegend, GroupedBars } from "@/components/charts";
+import { DonutRow, GroupedBars } from "@/components/charts";
 import { formatNumber, formatPercent } from "@/lib/domain";
 
 export const metadata = { title: "Norm Kadro ve Eksikler" };
@@ -89,10 +89,7 @@ export default async function NormKadroPage() {
         ).map(([title, data]) => (
           <Card key={title} className="p-4 sm:p-5">
             <h3 className="mb-3 text-[15px] font-semibold">{title}</h3>
-            <div className="grid grid-cols-[130px_1fr] items-center gap-3">
-              <DonutChart data={data} height={140} />
-              <DonutLegend data={data} showCount={false} />
-            </div>
+            <DonutRow data={data} height={140} showCount={false} />
           </Card>
         ))}
       </div>

@@ -23,8 +23,7 @@ import { decryptField } from "@/lib/crypto";
 import { StatCard } from "@/components/stat-card";
 import { Card, Badge, Avatar, durumBadgeColor, btnSecondary } from "@/components/ui";
 import {
-  DonutChart,
-  DonutLegend,
+  DonutRow,
   SimpleBars,
   TrendLine,
   SONUC_RENK,
@@ -101,10 +100,7 @@ export default async function CallCenterPage({
           <h3 className="mb-3 text-[15px] font-semibold">
             Sonuç Dağılımı <span className="font-normal text-muted">(Son 30 Gün)</span>
           </h3>
-          <div className="grid grid-cols-[150px_1fr] items-center gap-3">
-            <DonutChart data={sonuc} height={170} colorMap={SONUC_RENK} />
-            <DonutLegend data={sonuc} colorMap={SONUC_RENK} />
-          </div>
+          <DonutRow data={sonuc} height={170} colorMap={SONUC_RENK} />
         </Card>
         <Card className="p-4 sm:p-5">
           <h3 className="mb-3 text-[15px] font-semibold">Kaçıncı Aramada Ulaşıldı?</h3>
@@ -138,10 +134,7 @@ export default async function CallCenterPage({
           <h3 className="mb-3 text-[15px] font-semibold">
             SMS Sonuçları <span className="font-normal text-muted">(Son 30 Gün)</span>
           </h3>
-          <div className="grid grid-cols-[150px_1fr] items-center gap-3">
-            <DonutChart data={sms} height={170} colorMap={SMS_RENK} />
-            <DonutLegend data={sms} colorMap={SMS_RENK} />
-          </div>
+          <DonutRow data={sms} height={170} colorMap={SMS_RENK} />
         </Card>
       </div>
 

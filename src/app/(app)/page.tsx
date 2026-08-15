@@ -26,7 +26,7 @@ import {
 } from "@/lib/queries";
 import { StatCard } from "@/components/stat-card";
 import { Card, Badge, Avatar, durumBadgeColor, btnPrimary, btnSecondary, cx } from "@/components/ui";
-import { DonutChart, DonutLegend, TrendLine } from "@/components/charts";
+import { DonutRow, TrendLine } from "@/components/charts";
 import { FilterBar } from "@/components/filter-bar";
 import { Pagination } from "@/components/pagination";
 import { DURUM_ETIKETLERI, formatDateTime, formatNumber, formatPercent } from "@/lib/domain";
@@ -181,9 +181,8 @@ export default async function AnaEkran({ searchParams }: { searchParams: Promise
         <div className="space-y-5">
           <Card className="p-4 sm:p-5">
             <h3 className="text-[15px] font-semibold">Başvuruların Kaynak Dağılımı</h3>
-            <div className="mt-2 grid grid-cols-[150px_1fr] items-center gap-3">
-              <DonutChart data={kaynaklar} height={150} />
-              <DonutLegend data={kaynaklar} />
+            <div className="mt-2">
+              <DonutRow data={kaynaklar} />
             </div>
           </Card>
 

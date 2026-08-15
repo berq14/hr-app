@@ -49,12 +49,14 @@ export function StatCard({
         >
           <Icon className="h-5 w-5" strokeWidth={1.9} />
         </span>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-[13px] font-medium text-slate-600">{title}</p>
-          <p className="mt-1 text-[26px] font-bold leading-none tracking-tight">
+          <p className="mt-1 text-[26px] font-bold leading-tight tracking-tight break-words">
             {typeof value === "number" ? formatNumber(value) : value}
             {suffix ? (
-              <span className="ml-1 text-sm font-medium text-muted">{suffix}</span>
+              <span className="ml-1 text-sm font-medium break-words text-muted">
+                {suffix}
+              </span>
             ) : null}
           </p>
         </div>

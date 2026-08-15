@@ -17,8 +17,7 @@ import {
 import { StatCard } from "@/components/stat-card";
 import { Card } from "@/components/ui";
 import {
-  DonutChart,
-  DonutLegend,
+  DonutRow,
   GroupedBars,
   MultiLine,
   RatioBar,
@@ -100,10 +99,7 @@ export default async function AnalizPage() {
           />
         </ChartCard>
         <ChartCard title="Başvuru Kaynak Dağılımı" sub="Son 30 Gün">
-          <div className="grid grid-cols-[140px_1fr] items-center gap-3">
-            <DonutChart data={kaynaklar} height={150} />
-            <DonutLegend data={kaynaklar} />
-          </div>
+          <DonutRow data={kaynaklar} />
         </ChartCard>
 
         <ChartCard title="Günlük Başvuru Trendi" sub="Son 7 Gün">
@@ -120,10 +116,7 @@ export default async function AnalizPage() {
           />
         </ChartCard>
         <ChartCard title="Ön Mülakat Sonuç Oranları" sub="Son 30 Gün">
-          <div className="grid grid-cols-[140px_1fr] items-center gap-3">
-            <DonutChart data={mulakat} height={150} colorMap={SONUC_RENK} />
-            <DonutLegend data={mulakat} colorMap={SONUC_RENK} />
-          </div>
+          <DonutRow data={mulakat} colorMap={SONUC_RENK} />
         </ChartCard>
 
         <ChartCard title="İK Uzmanlarına Göre Aday Yükleme Dağılımı">
@@ -161,10 +154,7 @@ export default async function AnalizPage() {
         </ChartCard>
 
         <ChartCard title="Öğrenim Durumu Dağılımı" sub="Son 30 Gün">
-          <div className="grid grid-cols-[140px_1fr] items-center gap-3">
-            <DonutChart data={ogrenim} height={170} />
-            <DonutLegend data={ogrenim} />
-          </div>
+          <DonutRow data={ogrenim} height={170} />
         </ChartCard>
 
         <ChartCard title="Aylık Karşılaştırmalı Rapor">

@@ -112,6 +112,32 @@ export function DonutLegend({
   );
 }
 
+/** Donut + lejant: dar ekranda lejant alta sarar, taşma olmaz. */
+export function DonutRow({
+  data,
+  colorMap,
+  colors = CHART_COLORS,
+  height = 150,
+  showCount = true,
+}: {
+  data: Datum[];
+  colorMap?: Record<string, string>;
+  colors?: string[];
+  height?: number;
+  showCount?: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="mx-auto w-[140px] flex-none">
+        <DonutChart data={data} height={height} colors={colors} colorMap={colorMap} />
+      </div>
+      <div className="min-w-[170px] flex-1">
+        <DonutLegend data={data} colors={colors} colorMap={colorMap} showCount={showCount} />
+      </div>
+    </div>
+  );
+}
+
 export function TrendLine({
   data,
   height = 180,

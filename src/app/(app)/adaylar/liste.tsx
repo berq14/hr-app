@@ -98,7 +98,7 @@ export async function AdayListesi({
               {formatNumber(liste.toplam)} aday
             </span>
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <button className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 text-[13px] font-medium text-slate-600 hover:bg-slate-50">
               <Settings2 className="h-4 w-4" /> Sütunları Özelleştir
             </button>

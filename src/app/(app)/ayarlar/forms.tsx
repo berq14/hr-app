@@ -96,8 +96,8 @@ export function YeniPozisyonForm() {
   const [state, action, pending] = useActionState<FormState, FormData>(createPositionAction, undefined);
   return (
     <form action={action} className="space-y-3">
-      <div className="flex gap-2">
-        <input name="ad" required className={inputCls} placeholder="Pozisyon adı (ör. Depo Görevlisi)" />
+      <div className="flex flex-wrap gap-2">
+        <input name="ad" required className={inputCls + " min-w-40 flex-1"} placeholder="Pozisyon adı (ör. Depo Görevlisi)" />
         <button type="submit" disabled={pending} className={btnSecondary + " shrink-0"}>
           {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           Ekle
@@ -112,14 +112,14 @@ export function YeniKaynakForm() {
   const [state, action, pending] = useActionState<FormState, FormData>(createSourceAction, undefined);
   return (
     <form action={action} className="space-y-3">
-      <div className="flex gap-2">
-        <input name="ad" required className={inputCls} placeholder="Kaynak adı (ör. eleman.net)" />
+      <div className="flex flex-wrap gap-2">
+        <input name="ad" required className={inputCls + " min-w-40 flex-1"} placeholder="Kaynak adı (ör. eleman.net)" />
         <input
           name="maliyet"
           type="number"
           step="0.1"
           min="0"
-          className={inputCls + " w-28 shrink-0"}
+          className={inputCls + " flex-none basis-28"}
           placeholder="₺/aday"
           aria-label="Aday başı maliyet"
         />
@@ -137,8 +137,8 @@ export function YeniApiAnahtariForm() {
   const [state, action, pending] = useActionState<FormState, FormData>(createApiKeyAction, undefined);
   return (
     <form action={action} className="space-y-3">
-      <div className="flex gap-2">
-        <input name="ad" required className={inputCls} placeholder="Anahtar adı (ör. Telesekreter Robotu)" />
+      <div className="flex flex-wrap gap-2">
+        <input name="ad" required className={inputCls + " min-w-40 flex-1"} placeholder="Anahtar adı (ör. Telesekreter Robotu)" />
         <button type="submit" disabled={pending} className={btnSecondary + " shrink-0"}>
           {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
           Anahtar Oluştur
