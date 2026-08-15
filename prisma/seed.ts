@@ -167,6 +167,37 @@ async function main() {
     });
   }
 
+  // ── telesekreter (IVR) varsayılanları ──
+  await db.ivrCallTask.deleteMany();
+  await db.ivrQuestion.deleteMany();
+  await db.ivrSettings.deleteMany();
+  await db.ivrSettings.create({
+    data: { id: "main", aktif: false, saat1: "10:30", saat2: "15:30", maxDeneme: 3, olumluEsigi: 100 },
+  });
+  await db.ivrQuestion.createMany({
+    data: [
+      {
+        sira: 1,
+        metin:
+          "Merhaba, iş başvurunuz hakkında arıyoruz. Başvurduğunuz pozisyonda çalışmak istiyorsanız 1'e, istemiyorsanız 2'ye basınız.",
+        olumluTus: "1",
+        eleyici: true,
+      },
+      {
+        sira: 2,
+        metin: "Vardiyalı çalışma düzenine uygun musunuz? Uygunsanız 1'e, değilseniz 2'ye basınız.",
+        olumluTus: "1",
+        eleyici: false,
+      },
+      {
+        sira: 3,
+        metin: "En geç bir hafta içinde işe başlayabilir misiniz? Evet için 1'e, hayır için 2'ye basınız.",
+        olumluTus: "1",
+        eleyici: false,
+      },
+    ],
+  });
+
   // ── karekodlar ──
   const qr1 = await db.qrCode.create({
     data: {

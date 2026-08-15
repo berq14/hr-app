@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
   "/api/giris",
   "/api/basvuru",
   "/api/ingest", // telesekreter robotu (kendi API anahtarı doğrulaması var)
+  "/api/ivr/webhook", // telefoni sağlayıcısı geri bildirimi (API anahtarlı)
   "/api/saglik",
 ];
 

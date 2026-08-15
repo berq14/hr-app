@@ -192,7 +192,8 @@ model Candidate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  calls CallRecord[]
+  calls    CallRecord[]
+  ivrTasks IvrCallTask[]
 
   @@index([durum])
   @@index([basvuruTarihi])
@@ -222,6 +223,47 @@ model CallRecord {
 
   @@index([candidateId])
   @@index([aramaTarihi])
+}
+
+// ─── Telesekreter (IVR) ────────────────────────────────────────────
+
+// Tek satırlık kampanya ayarları (id = "main")
+model IvrSettings {
+  id            String    @id @default("main")
+  aktif         Boolean   @default(false)
+  saat1         String    @default("10:30") // HH:mm (Europe/Istanbul)
+  saat2         String    @default("15:30")
+  maxDeneme     Int       @default(3)
+  olumluEsigi   Int       @default(100) // doğru cevap yüzdesi eşiği
+  sonCalistirma DateTime?
+  sonSlot       String? // "2026-08-13 10:30" — aynı slotun iki kez koşmasını önler
+}
+
+model IvrQuestion {
+  id        String   @id @default(cuid())
+  sira      Int
+  metin     String // telefonda TTS ile okunacak soru metni
+  olumluTus String   @default("1") // "1" | "2" — hangi tuş olumlu sayılır
+  eleyici   Boolean  @default(false) // yanlış cevapta görüşme direkt olumsuz biter
+  aktif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model IvrCallTask {
+  id           String    @id @default(cuid())
+  candidateId  String
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  durum        String    @default("bekliyor") // bekliyor | tamamlandi | ulasilamadi | iptal
+  denemeSayisi Int       @default(0)
+  sonDeneme    DateTime?
+  cevaplar     String? // JSON: [{soruId, metin, tus, dogruMu}]
+  sonuc        String? // Olumlu | Olumsuz | Ulaşılamadı
+  kaynak       String    @default("otomatik") // otomatik | manuel | simulasyon
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([durum])
+  @@index([candidateId])
 }
 
 // ─── Karekod ───────────────────────────────────────────────────────

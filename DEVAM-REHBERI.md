@@ -3,7 +3,7 @@
 Bu belge, projeye başka bir bilgisayardan devam edebilmek için mevcut durumu,
 kurulum adımlarını ve açık işleri özetler.
 
-Son güncelleme: 13 Ağustos 2026
+Son güncelleme: 15 Ağustos 2026
 
 ---
 
@@ -97,6 +97,15 @@ Tamamlanan ve test edilen işler:
   İK Asistanı rolüne kapalı).
 - **Demo verisi:** `prisma/seed.ts` — deterministik, tekrar çalıştırılabilir
   (`npx prisma db seed` her seferinde temiz veri üretir).
+- **Telesekreter (IVR) modülü** (`/telesekreter`): İK'cının tanımladığı DTMF
+  sorularıyla (TTS okunacak, "1/2'ye basın") günde 2 kez BEKLEMEDE adayları
+  otomatik arayan kampanya kurgusu. Soru yönetimi (sıralama, eleyici kural,
+  tarayıcıda sesli önizleme), kampanya ayarları (saatler, maks. deneme, olumlu
+  eşiği), skorlama motoru, arama kuyruğu ve dakikada bir çalışan zamanlayıcı
+  (`src/instrumentation.ts` → `src/lib/ivr/scheduler.ts`). Gerçek santral
+  yokken akış SİMÜLATÖRLE test edilir ("Şimdi Çalıştır" butonu). Gerçek
+  sağlayıcı sonuçları `POST /api/ivr/webhook` (API anahtarlı) ucuna gönderir;
+  çekirdek mantık `src/lib/ivr/engine.ts` içinde sağlayıcıdan bağımsızdır.
 
 Uçtan uca test edilenler: giriş + 2FA kurulumu (tarayıcıda), tüm sayfalar,
 `/api/basvuru`, `/api/ingest` (geçersiz anahtar reddi dahil), import motoru,
@@ -122,7 +131,18 @@ Uçtan uca test edilenler: giriş + 2FA kurulumu (tarayıcıda), tüm sayfalar,
      bar, işe başlama oranı) tabloda var, grafik olarak eklenebilir
    - Aday silme/arşivleme akışı (KVKK saklama süresi politikasıyla birlikte)
    - E-posta/SMS bildirim entegrasyonları (Ayarlar'da anahtar altyapısı hazır)
-4. **Telesekreter robotu gerçek entegrasyonu:** Ayarlar → Entegrasyon
+4. **Telefoni sağlayıcısı seçimi ve IVR adaptörü (EN ÖNEMLİ AÇIK İŞ):**
+   Şu an telefon altyapısı yok; aramalar simülatörle yürüyor. Karar
+   seçenekleri: yerli bulut santral (Netgsm/Verimor — önerilen: yerli numara,
+   KVKK, hızlı kurulum), kendi Asterisk/FreeSWITCH santrali + SIP trunk
+   (en ucuz dakika, bakım ister) veya Twilio (yabancı numara görünür,
+   önerilmez). Sağlayıcı seçilince yapılacaklar: (a) `src/lib/ivr/engine.ts`
+   içindeki `simulateCall` çağrısının yerine sağlayıcının "arama başlat" API
+   çağrısını koyan bir adaptör yaz, (b) sağlayıcının çağrı sonucu webhook'unu
+   `POST /api/ivr/webhook` biçimine çevir (uç hazır, API anahtarıyla korunuyor),
+   (c) TTS'i sağlayıcının Türkçe seslendirmesiyle test et. Karar: TTS + DTMF
+   (tuşlama) onaylandı; sesli yanıt tanıma 2. faz.
+5. **Telesekreter robotu gerçek entegrasyonu:** Ayarlar → Entegrasyon
    Yönetimi'nden gerçek anahtar üretilip robota tanımlanacak (demo anahtarı
    üretimde devre dışı bırakın).
 
